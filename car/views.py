@@ -53,58 +53,55 @@ def listing_detail(request, myid):
     # using django sessions
     # is otp verified or not?
     otp_verified = False
-    if request.session.get('otp_verified') != None:
+    if request.session.get('otp_verified') is None:
+        otp_verified = False
+
+    else:
         otp_verified = True
         print(otp_verified)
-    else:
-        otp_verified = False
-    
     context = {'car':car[0], 'otp_verified':otp_verified}
 
     return render(request, 'listing-detail.html', context)
 
 # search page function
 def search(request):
-    if request.method=='GET':
-        car_city = request.GET.get('city')
-        vehicle_type = request.GET.get('vehicle_type')
-        slider_range = request.GET.get('slider')
-        range_list = slider_range.split(",")
-        min = range_list[0]
-        max = range_list[1]
-        print(min,max)
-        price_result = Car.objects.filter(expected_selling_price__range=(min, max))
-        # price_result = Car.objects.raw('select expected_selling_price from car_car where expected_selling_price between "'+min+'" and "'+max+'" ')
-        
-        allcars = Car.objects.all()
-        # vehicle_type=vehicle_type
-        if car_city == "Select Location" and vehicle_type == "Select Vehicle Type" :
-            result = Car.objects.all()
-        elif car_city == "Select Location" :
-            result = Car.objects.all().filter(vehicle_type= vehicle_type)
-        elif vehicle_type == "Select Vehicle Type":
-            result = Car.objects.all().filter(car_city = car_city)
-        else:
-            result = Car.objects.all().filter(car_city = car_city, vehicle_type= vehicle_type)
-        
-        # intersecting two dictionaries
+    if request.method != 'GET':
+        return
+    car_city = request.GET.get('city')
+    vehicle_type = request.GET.get('vehicle_type')
+    slider_range = request.GET.get('slider')
+    range_list = slider_range.split(",")
+    min = range_list[0]
+    max = range_list[1]
+    print(min,max)
+    price_result = Car.objects.filter(expected_selling_price__range=(min, max))
+    # price_result = Car.objects.raw('select expected_selling_price from car_car where expected_selling_price between "'+min+'" and "'+max+'" ')
 
-        final_dict = result & price_result
-        print(price_result)
-        print(result)
-        print("this is ")
-        print(final_dict)
+    allcars = Car.objects.all()
+    # vehicle_type=vehicle_type
+    if car_city == "Select Location" and vehicle_type == "Select Vehicle Type" :
+        result = Car.objects.all()
+    elif car_city == "Select Location" :
+        result = Car.objects.all().filter(vehicle_type= vehicle_type)
+    elif vehicle_type == "Select Vehicle Type":
+        result = Car.objects.all().filter(car_city = car_city)
+    else:
+        result = Car.objects.all().filter(car_city = car_city, vehicle_type= vehicle_type)
 
-        
+    # intersecting two dictionaries
 
-        # total_vehicles = len(final_dict)
-        total_vehicles = 6
-      
-
-        context = {'result':final_dict, 'allcars':allcars, 'total_vehicles':total_vehicles}
+    final_dict = result & price_result
+    print(price_result)
+    print(result)
+    print("this is ")
+    print(final_dict)
 
 
-        return render(request, 'search.html', context)
+
+    context = {'result': final_dict, 'allcars': allcars, 'total_vehicles': 6}
+
+
+    return render(request, 'search.html', context)
 
 
 def sort(request):
@@ -277,83 +274,81 @@ def about_us(request):
 
 @ratelimit(key='ip', rate='10/h', block=True)
 def signup(request):
-    if request.method == 'POST':
-        #get the form parameters
-        username = request.POST['username']
-        email = request.POST['email']
-        pass1 = request.POST['pass1']
-        pass2 = request.POST['pass2']
-        
-
-        #checks
-        if len(username)>15:
-            messages.error(request, "Username must be under 15 characters")
-            # return redirect('/')
-            signup_url = request.META['HTTP_REFERER'] + "#signupModal"
-            print(request.META['HTTP_REFERER'])
-            # return redirect(request.META['HTTP_REFERER'])
-            return redirect(signup_url)
-        
-        # unique username
-        if User.objects.filter(username=username).exists():
-            messages.error(request, "Username already exists")
-            # return redirect('/')
-            signup_url = request.META['HTTP_REFERER'] + "#signupModal"
-            print(request.META['HTTP_REFERER'])
-            # return redirect(request.META['HTTP_REFERER'])
-            return redirect(signup_url)
-        
-        # unique email
-        if User.objects.filter(email=email).exists():
-            messages.error(request, "Email already exists")
-            # return redirect('/')
-            signup_url = request.META['HTTP_REFERER'] + "#signupModal"
-            print(request.META['HTTP_REFERER'])
-            # return redirect(request.META['HTTP_REFERER'])
-            return redirect(signup_url)
-        
-        if pass1 != pass2:
-            messages.error(request, "Password do Not match")
-            # return redirect('/')
-            # return redirect(request.META['HTTP_REFERER'])
-            signup_url = request.META['HTTP_REFERER'] + "#signupModal"
-            return redirect(signup_url)
-        
-        if len(pass1)<6:
-            messages.error(request, "Password length must be greater than 6")
-            # return redirect('/')
-            # return redirect(request.META['HTTP_REFERER'])
-            signup_url = request.META['HTTP_REFERER'] + "#signupModal"
-            return redirect(signup_url)
+    if request.method != 'POST':
+        return HttpResponse('404- Not Found')
+    #get the form parameters
+    username = request.POST['username']
+    email = request.POST['email']
+    pass1 = request.POST['pass1']
+    pass2 = request.POST['pass2']
 
 
+    #checks
+    if len(username)>15:
+        messages.error(request, "Username must be under 15 characters")
+        # return redirect('/')
+        signup_url = request.META['HTTP_REFERER'] + "#signupModal"
+        print(request.META['HTTP_REFERER'])
+        # return redirect(request.META['HTTP_REFERER'])
+        return redirect(signup_url)
+
+    # unique username
+    if User.objects.filter(username=username).exists():
+        messages.error(request, "Username already exists")
+        # return redirect('/')
+        signup_url = request.META['HTTP_REFERER'] + "#signupModal"
+        print(request.META['HTTP_REFERER'])
+        # return redirect(request.META['HTTP_REFERER'])
+        return redirect(signup_url)
+
+    # unique email
+    if User.objects.filter(email=email).exists():
+        messages.error(request, "Email already exists")
+        # return redirect('/')
+        signup_url = request.META['HTTP_REFERER'] + "#signupModal"
+        print(request.META['HTTP_REFERER'])
+        # return redirect(request.META['HTTP_REFERER'])
+        return redirect(signup_url)
+
+    if pass1 != pass2:
+        messages.error(request, "Password do Not match")
+        # return redirect('/')
+        # return redirect(request.META['HTTP_REFERER'])
+        signup_url = request.META['HTTP_REFERER'] + "#signupModal"
+        return redirect(signup_url)
+
+    if len(pass1)<6:
+        messages.error(request, "Password length must be greater than 6")
+        # return redirect('/')
+        # return redirect(request.META['HTTP_REFERER'])
+        signup_url = request.META['HTTP_REFERER'] + "#signupModal"
+        return redirect(signup_url)
 
 
-        # create the user
-        myuser = User.objects.create_user(username,email,pass1)
-        myuser.save()
-        messages.success(request, "Your account has been created")
-        
-        
-        # login with same details
-        user = authenticate(username=username, password =pass1)
-        if user is not None:
-            login(request, user)
-            messages.success(request, "Successfully Logged In")
-            # return redirect('/')
-            return redirect(request.META['HTTP_REFERER'])
-        else:
-            messages.error(request, "Invalid Credentials")
-            # return redirect('/')
-            # return redirect(request.META['HTTP_REFERER'])
-            login_url = request.META['HTTP_REFERER'] + "#loginModal"
-            return redirect(login_url)
 
+
+    # create the user
+    myuser = User.objects.create_user(username,email,pass1)
+    myuser.save()
+    messages.success(request, "Your account has been created")
+
+
+    # login with same details
+    user = authenticate(username=username, password =pass1)
+    if user is not None:
+        login(request, user)
+        messages.success(request, "Successfully Logged In")
         # return redirect('/')
         return redirect(request.META['HTTP_REFERER'])
-    
     else:
-        return HttpResponse('404- Not Found')
+        messages.error(request, "Invalid Credentials")
+        # return redirect('/')
+        # return redirect(request.META['HTTP_REFERER'])
+        login_url = request.META['HTTP_REFERER'] + "#loginModal"
+        return redirect(login_url)
+
+    # return redirect('/')
+    return redirect(request.META['HTTP_REFERER'])
 
 
 @ratelimit(key='ip', rate='10/h', block=True)  
@@ -462,7 +457,7 @@ def submit_otp(request):
 # generate random number for otp
 def generate_otp_message(request):
     rand_message = random.randint(1000, 9999)
-    message = 'The OTP for BihariMotors is '+ str(rand_message)
+    message = f'The OTP for BihariMotors is {rand_message}'
     apikey = ""
     phone_number =request.session['session_phone_number']
     print(phone_number)
